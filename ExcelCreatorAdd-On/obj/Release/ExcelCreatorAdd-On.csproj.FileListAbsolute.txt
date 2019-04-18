@@ -1,0 +1,6 @@
+D:\Projects\ExcelCreatorAdd-On\ExcelCreatorAdd-On\bin\Release\ExcelCreatorAdd-On.exe
+D:\Projects\ExcelCreatorAdd-On\ExcelCreatorAdd-On\bin\Release\ExcelCreatorAdd-On.pdb
+D:\Projects\ExcelCreatorAdd-On\ExcelCreatorAdd-On\bin\Release\EPPlus.dll
+D:\Projects\ExcelCreatorAdd-On\ExcelCreatorAdd-On\bin\Release\EPPlus.xml
+D:\Projects\ExcelCreatorAdd-On\ExcelCreatorAdd-On\obj\Release\ExcelCreatorAdd-On.exe
+D:\Projects\ExcelCreatorAdd-On\ExcelCreatorAdd-On\obj\Release\ExcelCreatorAdd-On.pdb
