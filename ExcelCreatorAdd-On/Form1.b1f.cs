@@ -7,7 +7,6 @@ using OfficeOpenXml;
 using System.Drawing;
 using OfficeOpenXml.Style;
 using System.Diagnostics;
-using ExcelCreatorAdd_On.HelperClasses;
 
 namespace ExcelCreatorAdd_On
 {
@@ -53,14 +52,35 @@ namespace ExcelCreatorAdd_On
             SAPbobsCOM.Recordset recordset = (SAPbobsCOM.Recordset)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
             SAPbobsCOM.Recordset recordset2 = (SAPbobsCOM.Recordset)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
 
-            DateTime date1 = Converter.ConvertEditTextValueToDatetime(EditText0.Value.ToString());
-            string startDate = date1.ToString("yyyy-MM-dd");
+            string date1 = EditText0.Value;
+            string startDate = string.Empty;
+            if (date1.Length > 0)
+            {
+                startDate = date1.Substring(0, 4) + "-" + date1.Substring(4, 2) + "-" + date1.Substring(date1.Length - 2, 2);
+            }
 
-            DateTime date2 = Converter.ConvertEditTextValueToDatetime(EditText1.Value.ToString());
-            string endDate = date2.ToString("yyyy-MM-dd");
 
-            string queryHeader = $"call \"Excel_Get_JournalEntry_Header\"('{startDate}', '{endDate}')";
-            recordset.DoQuery(queryHeader);
+            string date2 = EditText1.Value;
+            string endDate = string.Empty;
+            if (date2.Length > 0)
+            {
+                endDate = date2.Substring(0, 4) + "-" + date2.Substring(4, 2) + "-" + date2.Substring(date2.Length - 2, 2);
+            }
+
+            if (date1.Length > 0 && date2.Length > 0)
+            {
+                try
+                {
+                    string queryHeader = $"call \"Excel_Get_JournalEntry_Header\"('{startDate}', '{endDate}')";
+                    recordset.DoQuery(queryHeader);
+                }
+                catch (Exception ex)
+                {
+                    Application.SBO_Application.SetStatusBarMessage(ex.Message, SAPbouiCOM.BoMessageTime.bmt_Medium);
+                }
+            }
+
+
 
             string filepath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
             string docName = $"{filepath}\\{DateTime.Now.ToString("yyyyMMddHHmmssff")}.xlsx";
@@ -70,15 +90,29 @@ namespace ExcelCreatorAdd_On
             //Add entryHeader Sheet
             Excel.AddSheet(pck, "entryHeader", recordset);
 
-            string queryDetail = $"call \"Excel_Get_JournalEntry_Detail\"('{startDate}', '{endDate}')";
-            recordset.DoQuery(queryDetail);
+            if (date1.Length > 0 && date2.Length > 0)
+            {
+                try
+                {
+                    string queryDetail = $"call \"Excel_Get_JournalEntry_Detail\"('{startDate}', '{endDate}')";
+                    recordset.DoQuery(queryDetail);
+                }
+                catch (Exception ex)
+                {
+                    Application.SBO_Application.SetStatusBarMessage(ex.Message, SAPbouiCOM.BoMessageTime.bmt_Medium);
+                }
+            }
+
 
             //Add entryHeader Sheet
             Excel.AddSheet(pck, "entryDetail", recordset);
 
+            if (recordset.RecordCount > 0 || recordset.Fields.Count > 0)
+            {
+                pck.Save();
+                Process.Start(docName);
+            }
 
-            pck.Save();
-            Process.Start(docName);
         }
 
         private SAPbouiCOM.EditText EditText1;

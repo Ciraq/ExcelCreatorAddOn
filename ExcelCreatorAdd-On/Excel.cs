@@ -20,25 +20,32 @@ namespace ExcelCreatorAdd_On
 
             Color headercolor = ColorTranslator.FromHtml(htmlColor);
             //Add Columns
-            int col = 1;
-            for (int i = 0; i < recordset.Fields.Count; i++)
+            if (recordset.RecordCount > 0)
             {
-                var recordCol = recordset.Fields.Item(i).Description;
-                sheet.Cells[1, col].Value = recordCol;
-                col++;
+                int col = 1;
+                for (int i = 0; i < recordset.Fields.Count; i++)
+                {
+                    var recordCol = recordset.Fields.Item(i).Description;
+                    sheet.Cells[1, col].Value = recordCol;
+                    col++;
+                }
             }
 
             //Add Style
-            sheet.Cells[1, 1, 1, recordset.Fields.Count].Style.Font.Bold = true;
-            sheet.Cells[1, 1, 1, recordset.Fields.Count].Style.Font.Bold = true;
-            sheet.Cells[1, 1, 1, recordset.Fields.Count].Style.Fill.PatternType = ExcelFillStyle.Solid;
-            sheet.Cells[1, 1, 1, recordset.Fields.Count].Style.Fill.BackgroundColor.SetColor(headercolor);
-            sheet.Cells.AutoFitColumns();
-            sheet.DefaultColWidth = 18;
-            sheet.DefaultRowHeight = 18;
+            if (recordset.RecordCount > 0)
+            {
+                sheet.Cells[1, 1, 1, recordset.Fields.Count].Style.Font.Bold = true;
+                sheet.Cells[1, 1, 1, recordset.Fields.Count].Style.Font.Bold = true;
+                sheet.Cells[1, 1, 1, recordset.Fields.Count].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                sheet.Cells[1, 1, 1, recordset.Fields.Count].Style.Fill.BackgroundColor.SetColor(headercolor);
+                sheet.Cells.AutoFitColumns();
+                sheet.DefaultColWidth = 18;
+                sheet.DefaultRowHeight = 18;
+            }
+
 
             //Fill cells
-            if (recordset.RecordCount > 0)
+            if (recordset.Fields.Count > 0)
             {
                 int currentCol = 1;
                 int currentRow = 2;
