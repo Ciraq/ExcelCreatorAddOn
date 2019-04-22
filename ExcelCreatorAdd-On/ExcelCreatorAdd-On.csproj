@@ -56,6 +56,9 @@
     <None Include="Form1.b1f">
       <FormCategory>UserForm</FormCategory>
     </None>
+    <Compile Include="Converter.cs" />
+    <Compile Include="DefterMain.cs" />
+    <Compile Include="DIConnection.cs" />
     <Compile Include="Excel.cs" />
     <Compile Include="Form1.b1f.cs">
       <DependentUpon>Form1.b1f</DependentUpon>

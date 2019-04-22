@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Xml;
 using SAPbouiCOM.Framework;
 using System.IO;
 using OfficeOpenXml;
-using System.Drawing;
-using OfficeOpenXml.Style;
 using System.Diagnostics;
 
 namespace ExcelCreatorAdd_On
@@ -25,7 +21,7 @@ namespace ExcelCreatorAdd_On
             this.EditText0 = ((SAPbouiCOM.EditText)(this.GetItem("Item_0").Specific));
             this.Button0 = ((SAPbouiCOM.Button)(this.GetItem("Item_1").Specific));
             this.Button0.PressedAfter += new SAPbouiCOM._IButtonEvents_PressedAfterEventHandler(this.Button0_PressedAfter);
-            this.EditText1 = ((SAPbouiCOM.EditText)(this.GetItem("Item_2").Specific));
+            this.StaticText0 = ((SAPbouiCOM.StaticText)(this.GetItem("Item_2").Specific));
             this.OnCustomInitialize();
 
         }
@@ -48,38 +44,49 @@ namespace ExcelCreatorAdd_On
 
         private void Button0_PressedAfter(object sboObject, SAPbouiCOM.SBOItemEventArg pVal)
         {
-            SAPbobsCOM.Company company = (SAPbobsCOM.Company)Application.SBO_Application.Company.GetDICompany();
-            SAPbobsCOM.Recordset recordset = (SAPbobsCOM.Recordset)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
-            SAPbobsCOM.Recordset recordset2 = (SAPbobsCOM.Recordset)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
-
-            string date1 = EditText0.Value;
-            string startDate = string.Empty;
-            if (date1.Length > 0)
-            {
-                startDate = date1.Substring(0, 4) + "-" + date1.Substring(4, 2) + "-" + date1.Substring(date1.Length - 2, 2);
-            }
-
-
-            string date2 = EditText1.Value;
-            string endDate = string.Empty;
-            if (date2.Length > 0)
-            {
-                endDate = date2.Substring(0, 4) + "-" + date2.Substring(4, 2) + "-" + date2.Substring(date2.Length - 2, 2);
-            }
-
-            if (date1.Length > 0 && date2.Length > 0)
+            //Ayın ilk və son gününü tapıram sonra date formatını dəyişirəm
+            string FirstDayOfMonth=string.Empty;
+            string LastDayOfMonth=string.Empty;
+            if (!String.IsNullOrEmpty(EditText0.Value))
             {
                 try
                 {
-                    string queryHeader = $"call \"Excel_Get_JournalEntry_Header\"('{startDate}', '{endDate}')";
-                    recordset.DoQuery(queryHeader);
+                    FirstDayOfMonth = Converter.StringToHanaStyle(Converter.FirstDayOfMonth(EditText0.Value).ToString());
+                    LastDayOfMonth = Converter.StringToHanaStyle(Converter.LastDayOfMonth(EditText0.Value).ToString());
                 }
                 catch (Exception ex)
                 {
                     Application.SBO_Application.SetStatusBarMessage(ex.Message, SAPbouiCOM.BoMessageTime.bmt_Medium);
+                    return;
                 }
             }
+            else
+            {
+                Application.SBO_Application.SetStatusBarMessage("Zəhmət olmasa tarix əlavə edin", SAPbouiCOM.BoMessageTime.bmt_Medium);
+                return;
+            }
 
+            SAPbobsCOM.Recordset recordset;
+            try
+            {
+                SAPbobsCOM.Company company = (SAPbobsCOM.Company)Application.SBO_Application.Company.GetDICompany();
+                recordset = (SAPbobsCOM.Recordset)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
+            }
+            catch (Exception ex)
+            {
+                Application.SBO_Application.SetStatusBarMessage(ex.Message, SAPbouiCOM.BoMessageTime.bmt_Medium);
+                throw;
+            }  
+
+            try
+            {
+                string queryHeader = $"call \"Excel_Get_JournalEntry_Header\"('{FirstDayOfMonth}', '{LastDayOfMonth}')";
+                recordset.DoQuery(queryHeader);
+            }
+            catch (Exception ex)
+            {
+                Application.SBO_Application.SetStatusBarMessage(ex.Message, SAPbouiCOM.BoMessageTime.bmt_Medium);
+            }
 
 
             string filepath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
@@ -87,25 +94,26 @@ namespace ExcelCreatorAdd_On
             FileInfo sheetinfo = new FileInfo(docName);
             ExcelPackage pck = new ExcelPackage(sheetinfo);
 
+            //Add defterMain
+            Excel.AddDefterMainSheet(pck, "defterMain");
+
             //Add entryHeader Sheet
             Excel.AddSheet(pck, "entryHeader", recordset);
 
-            if (date1.Length > 0 && date2.Length > 0)
+            try
             {
-                try
-                {
-                    string queryDetail = $"call \"Excel_Get_JournalEntry_Detail\"('{startDate}', '{endDate}')";
-                    recordset.DoQuery(queryDetail);
-                }
-                catch (Exception ex)
-                {
-                    Application.SBO_Application.SetStatusBarMessage(ex.Message, SAPbouiCOM.BoMessageTime.bmt_Medium);
-                }
+                string queryDetail = $"call \"Excel_Get_JournalEntry_Detail\"('{FirstDayOfMonth}', '{LastDayOfMonth}')";
+                recordset.DoQuery(queryDetail);
+            }
+            catch (Exception ex)
+            {
+                Application.SBO_Application.SetStatusBarMessage(ex.Message, SAPbouiCOM.BoMessageTime.bmt_Medium);
             }
 
 
             //Add entryHeader Sheet
             Excel.AddSheet(pck, "entryDetail", recordset);
+
 
             if (recordset.RecordCount > 0 || recordset.Fields.Count > 0)
             {
@@ -115,6 +123,6 @@ namespace ExcelCreatorAdd_On
 
         }
 
-        private SAPbouiCOM.EditText EditText1;
+        private SAPbouiCOM.StaticText StaticText0;
     }
 }
