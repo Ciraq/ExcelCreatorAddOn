@@ -44,83 +44,52 @@ namespace ExcelCreatorAdd_On
 
         private void Button0_PressedAfter(object sboObject, SAPbouiCOM.SBOItemEventArg pVal)
         {
-            //Ayın ilk və son gününü tapıram sonra date formatını dəyişirəm
-            string FirstDayOfMonth=string.Empty;
-            string LastDayOfMonth=string.Empty;
-            if (!String.IsNullOrEmpty(EditText0.Value))
+            if (String.IsNullOrEmpty(EditText0.Value))
             {
-                try
-                {
-                    FirstDayOfMonth = Converter.StringToHanaStyle(Converter.FirstDayOfMonth(EditText0.Value).ToString());
-                    LastDayOfMonth = Converter.StringToHanaStyle(Converter.LastDayOfMonth(EditText0.Value).ToString());
-                }
-                catch (Exception ex)
-                {
-                    Application.SBO_Application.SetStatusBarMessage(ex.Message, SAPbouiCOM.BoMessageTime.bmt_Medium);
-                    return;
-                }
-            }
-            else
-            {
-                Application.SBO_Application.SetStatusBarMessage("Zəhmət olmasa tarix əlavə edin", SAPbouiCOM.BoMessageTime.bmt_Medium);
+                Application.SBO_Application.SetStatusBarMessage("Zəhmət olmasa tarix əlavə edin");
                 return;
             }
 
-            SAPbobsCOM.Recordset recordset;
             try
             {
-                SAPbobsCOM.Company company = (SAPbobsCOM.Company)Application.SBO_Application.Company.GetDICompany();
-                recordset = (SAPbobsCOM.Recordset)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
-            }
-            catch (Exception ex)
-            {
-                Application.SBO_Application.SetStatusBarMessage(ex.Message, SAPbouiCOM.BoMessageTime.bmt_Medium);
-                throw;
-            }  
+                var FirstDayOfMonth = Converter.StringToHanaStyle(Converter.FirstDayOfMonth(EditText0.Value).ToString());
+                var LastDayOfMonth = Converter.StringToHanaStyle(Converter.LastDayOfMonth(EditText0.Value).ToString());
 
-            try
-            {
+                SAPbobsCOM.Recordset recordset1 = (SAPbobsCOM.Recordset)DIConnection.company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
+                SAPbobsCOM.Recordset recordset2 = (SAPbobsCOM.Recordset)DIConnection.company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
+
                 string queryHeader = $"call \"Excel_Get_JournalEntry_Header\"('{FirstDayOfMonth}', '{LastDayOfMonth}')";
-                recordset.DoQuery(queryHeader);
-            }
-            catch (Exception ex)
-            {
-                Application.SBO_Application.SetStatusBarMessage(ex.Message, SAPbouiCOM.BoMessageTime.bmt_Medium);
-            }
-
-
-            string filepath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-            string docName = $"{filepath}\\{DateTime.Now.ToString("yyyyMMddHHmmssff")}.xlsx";
-            FileInfo sheetinfo = new FileInfo(docName);
-            ExcelPackage pck = new ExcelPackage(sheetinfo);
-
-            //Add defterMain
-            Excel.AddDefterMainSheet(pck, "defterMain");
-
-            //Add entryHeader Sheet
-            Excel.AddSheet(pck, "entryHeader", recordset);
-
-            try
-            {
                 string queryDetail = $"call \"Excel_Get_JournalEntry_Detail\"('{FirstDayOfMonth}', '{LastDayOfMonth}')";
-                recordset.DoQuery(queryDetail);
-            }
-            catch (Exception ex)
-            {
-                Application.SBO_Application.SetStatusBarMessage(ex.Message, SAPbouiCOM.BoMessageTime.bmt_Medium);
-            }
 
+                var RecordsetHeader = MyRecordset.FillRecordset(queryHeader, recordset1);
+                var RecordsetDetail = MyRecordset.FillRecordset(queryDetail, recordset2);
 
-            //Add entryHeader Sheet
-            Excel.AddSheet(pck, "entryDetail", recordset);
+                if (RecordsetHeader.RecordCount==0 && RecordsetDetail.RecordCount==0)
+                {
+                    Application.SBO_Application.SetStatusBarMessage("Məlumat tapılmadı");
+                    return;
+                }
 
+                string docName = $"{Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory)}\\{DateTime.Now.ToString("yyyyMMddHHmmssff")}.xlsx";
+                FileInfo sheetinfo = new FileInfo(docName);
+                ExcelPackage pck = new ExcelPackage(sheetinfo);
 
-            if (recordset.RecordCount > 0 || recordset.Fields.Count > 0)
-            {
+                //Add defterMain
+                Excel.AddDefterMainSheet(pck, "defterMain");
+
+                //Add entryHeader Sheet
+                Excel.AddSheet(pck, "entryHeader", RecordsetHeader);
+
+                //Add entryHeader Sheet
+                Excel.AddSheet(pck, "entryDetail", RecordsetDetail);
+
                 pck.Save();
                 Process.Start(docName);
             }
-
+            catch (Exception ex)
+            {
+                Application.SBO_Application.SetStatusBarMessage(ex.Message);
+            }
         }
 
         private SAPbouiCOM.StaticText StaticText0;

@@ -49,10 +49,11 @@ namespace ExcelCreatorAdd_On
             sheet.DefaultRowHeight = 18;
         }
 
-        public static void AddSheet(ExcelPackage pck, string sheetName, Recordset recordset ,string htmlColor = "#D3D3D3")
+        public static void AddSheet(ExcelPackage pck, string sheetName, Recordset recordset, string htmlColor = "#D3D3D3")
         {
-            var sheet = pck.Workbook.Worksheets.Add(sheetName);
+            //recordset.DoQuery(url);
 
+            var sheet = pck.Workbook.Worksheets.Add(sheetName);
             
             //Add Columns
             int col = 1;
